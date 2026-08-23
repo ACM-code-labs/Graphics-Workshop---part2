@@ -1,10 +1,10 @@
 #version 330 core
 
-in vec3 aFrag;
 out vec4 FragColor;
 
+uniform vec3 objectColor;
+uniform vec3 lightColor;
+
 void main(){
-
-     FragColor = vec4(aFrag.x, aFrag.y, aFrag.z, 1);
-
+     FragColor = vec4(lightColor * objectColor, 1);
 }

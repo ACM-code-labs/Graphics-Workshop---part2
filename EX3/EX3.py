@@ -31,7 +31,7 @@ vertex = np.array([
 ], np.float32)
 
 index = np.array([
-   0, 1, 2,  2, 1, 3,
+    0, 1, 2,  2, 1, 3,
    
     4, 5, 6,  6, 5, 7,
   
