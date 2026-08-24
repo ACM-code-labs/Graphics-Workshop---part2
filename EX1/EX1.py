@@ -17,32 +17,50 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 window = None
 
 vertex = np.array([
-    0.5, 0.5, 0.5,      
-    0.5, 0.5, -0.5,     
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+    -0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
 
-    0.5, -0.5, 0.5,     
-    0.5, -0.5, -0.5,    
+    -0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
+     0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+    -0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+    -0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
 
-    -0.5, 0.5, 0.5,     
-    -0.5, 0.5, -0.5,    
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
 
-    -0.5, -0.5, 0.5,    
-    -0.5, -0.5, -0.5,   
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0  
 ], np.float32)
 
-index = np.array([
-   0, 1, 2,  2, 1, 3,
-   
-    4, 5, 6,  6, 5, 7,
-  
-    4, 0, 6,  6, 0, 2,
-  
-    1, 5, 3,  3, 5, 7,
-  
-    4, 1, 0,  4, 5, 1,
-  
-    2, 3, 6,  6, 3, 7
-    ], np.uint32)
+
 
 lastx : float = 0
 lasty : float = 0
@@ -161,43 +179,43 @@ def main():
     startGlfwAndMakeWindow(800, 600)
     
     shader_object = Shader(os.path.join(HERE, "Shaders", "vertexShader.vs"), os.path.join(HERE, "Shaders", "fragmentShader.fs"))
-    shader_light = Shader(os.path.join(HERE, "Shaders", "vertexShader.vs"), os.path.join(HERE, "Shaders", "lightFragmentShader.fs"))
+    shader_light = Shader(os.path.join(HERE, "Shaders", "lightVertexShader.vs"), os.path.join(HERE, "Shaders", "lightFragmentShader.fs"))
 
     VAO = glGenVertexArrays(1)
     lightVAO = glGenVertexArrays(1)
     VBO = glGenBuffers(1)
-    EBO = glGenBuffers(1)
-
+   
     #object VAO
     glBindVertexArray(VAO)
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
     glBufferData(GL_ARRAY_BUFFER, vertex.nbytes, vertex, GL_STATIC_DRAW)
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index.nbytes, index, GL_STATIC_DRAW)
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * vertex.itemsize, ctypes.c_void_p(0))
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * vertex.itemsize, ctypes.c_void_p(0))
     glEnableVertexAttribArray(0)
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * vertex.itemsize, ctypes.c_void_p(3 * vertex.itemsize))
+    glEnableVertexAttribArray(1)
 
     #light VAO
     glBindVertexArray(lightVAO)
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
     glBufferData(GL_ARRAY_BUFFER, vertex.nbytes, vertex, GL_STATIC_DRAW)
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index.nbytes, index, GL_STATIC_DRAW)
-    
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * vertex.itemsize, ctypes.c_void_p(0))
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * vertex.itemsize, ctypes.c_void_p(0))
     glEnableVertexAttribArray(0)
-
 
     lightColorLoc = glGetUniformLocation(shader_object.ID, "lightColor")
     objectColorLoc = glGetUniformLocation(shader_object.ID, "objectColor")
-    lightColorLoc_2 = glGetUniformLocation(shader_light.ID, "lightColor")
+    lightPosLoc= glGetUniformLocation(shader_object.ID, "lightPos")
+    viewerPos= glGetUniformLocation(shader_object.ID, "viewPos")
 
+    lightColorLoc_2 = glGetUniformLocation(shader_light.ID, "lightColor")
+    
     shader_object.use()
     glUniform3fv(lightColorLoc, 1, glm.value_ptr(light.color))
     glUniform3fv(objectColorLoc, 1, glm.value_ptr(cube.color))
+    glUniform3fv(lightPosLoc, 1, glm.value_ptr(light.pos))
+   
 
     shader_light.use()
     glUniform3fv(lightColorLoc_2, 1, glm.value_ptr(light.color))
@@ -208,7 +226,7 @@ def main():
     while((not glfw.window_should_close(window)) and (not glfw.get_key(window, glfw.KEY_ESCAPE))):
         glClearColor(0, 0, 0, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
+        
         currentFrame = glfw.get_time()
         deltaTime = currentFrame - lastFrame
         lastFrame = currentFrame
@@ -228,9 +246,10 @@ def main():
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm.value_ptr(model))
         glUniformMatrix4fv(peojectionLoc, 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm.value_ptr(view))
+        glUniform3fv(viewerPos, 1, glm.value_ptr(camera.pos))
         
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
-
+        glDrawArrays(GL_TRIANGLES, 0, 36)
+                
         shader_light.use()
         glBindVertexArray(lightVAO)
 
@@ -245,7 +264,7 @@ def main():
         glUniformMatrix4fv(peojectionLoc, 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm.value_ptr(view))
 
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
+        glDrawArrays(GL_TRIANGLES, 0, 36)
         
         glfw.swap_buffers(window)
         glfw.poll_events()
