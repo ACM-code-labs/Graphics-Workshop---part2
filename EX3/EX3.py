@@ -9,6 +9,7 @@ from OpenGL.GL import *
 
 from dataclasses import dataclass
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from util.shader import Shader
 
@@ -43,6 +44,19 @@ index = np.array([
   
     2, 3, 6,  6, 3, 7
     ], np.uint32)
+
+cubePos = np.array([
+    glm.vec3( 0.0,  0.0,  0.0), 
+    glm.vec3( 2.0,  5.0, -15.0), 
+    glm.vec3(-1.5, -2.2, -2.5),  
+    glm.vec3(-3.8, -2.0, -12.3),  
+    glm.vec3( 2.4, -0.4, -3.5),  
+    glm.vec3(-1.7,  3.0, -7.5),  
+    glm.vec3( 1.3, -2.0, -2.5),  
+    glm.vec3( 1.5,  2.0, -2.5), 
+    glm.vec3( 1.5,  0.2, -1.5), 
+    glm.vec3(-1.3,  1.0, -1.5), 
+])
 
 lastx : float = 0
 lasty : float = 0
@@ -168,7 +182,7 @@ def main():
 
     view = glm.lookAt(camera.pos, camera.front, camera.up)
     projection = glm.perspective(glm.radians(45), 800/600, 0.1, 100)
-    model = glm.mat4(1)
+   
 
     glEnable(GL_DEPTH_TEST)
     
@@ -184,11 +198,17 @@ def main():
         process_Input(window)
         view = glm.lookAt(camera.pos, camera.pos + camera.front, camera.up)
 
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+       
         glUniformMatrix4fv(peojectionLoc, 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm.value_ptr(view))
-        
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
+
+        for i, pos in enumerate(cubePos):
+            model = glm.mat4(1)      
+            model = glm.translate(model, pos)
+            angle : float = 20.0 * i
+            model = glm.rotate(model, glm.radians(angle), glm.vec3(1.0, 0.3, 0.5))
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
         
         glfw.swap_buffers(window)
         glfw.poll_events()

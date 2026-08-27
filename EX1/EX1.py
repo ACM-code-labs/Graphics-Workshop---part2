@@ -61,7 +61,6 @@ vertex = np.array([
 ], np.float32)
 
 
-
 lastx : float = 0
 lasty : float = 0
 yaw : float
