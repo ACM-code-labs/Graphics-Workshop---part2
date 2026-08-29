@@ -195,7 +195,7 @@ def main():
     projection = glm.perspective(glm.radians(45), 800/600, 0.1, 100)
     glEnable(GL_DEPTH_TEST)
 
-    currentTex = loadTexture(os.path.join(os.path.dirname(HERE), "resources", "crate", "crate.png"))
+    loadTexture(os.path.join(os.path.dirname(HERE), "resources", "crate", "crate.png"))
 
     
     while((not glfw.window_should_close(window)) and (not glfw.get_key(window, glfw.KEY_ESCAPE))):
