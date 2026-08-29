@@ -8,7 +8,7 @@ import numpy as np
 from OpenGL.GL import *
 
 from dataclasses import dataclass
-from PIL import Image
+
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from util.shader import Shader
@@ -18,49 +18,45 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 window = None
 
 vertex = np.array([
-    -0.5, -0.5, -0.5,  0.0, 0.0,
-     0.5, -0.5, -0.5,  1.0, 0.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-    -0.5,  0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 0.0,
+    0.5, 0.5, 0.5,      1,0,0,
+    0.5, 0.5, -0.5,     1,0,0,
 
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 1.0,
-     0.5,  0.5,  0.5,  1.0, 1.0,
-    -0.5,  0.5,  0.5,  0.0, 1.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
+    0.5, -0.5, 0.5,     0,1,0,
+    0.5, -0.5, -0.5,    0,1,0,
 
-    -0.5,  0.5,  0.5,  0.0, 1.0,
-    -0.5,  0.5, -0.5,  1.0, 1.0,
-    -0.5, -0.5, -0.5,  1.0, 0.0,
-    -0.5, -0.5, -0.5,  1.0, 0.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-    -0.5,  0.5,  0.5,  0.0, 1.0,
+    -0.5, 0.5, 0.5,     0,0,1,
+    -0.5, 0.5, -0.5,    0,0,1,
 
-     0.5,  0.5,  0.5,  0.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5, -0.5, -0.5,  1.0, 0.0,
-     0.5, -0.5, -0.5,  1.0, 0.0,
-     0.5, -0.5,  0.5,  0.0, 0.0,
-     0.5,  0.5,  0.5,  0.0, 1.0,
-
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5, -0.5,  1.0, 1.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-
-    -0.5,  0.5, -0.5,  0.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-    -0.5,  0.5,  0.5,  0.0, 0.0,
-    -0.5,  0.5, -0.5,  0.0, 1.0,
+    -0.5, -0.5, 0.5,    1,1,1,
+    -0.5, -0.5, -0.5,   1,1,1,
 ], np.float32)
 
+index = np.array([
+    0, 1, 2,  2, 1, 3,
+   
+    4, 5, 6,  6, 5, 7,
+  
+    4, 0, 6,  6, 0, 2,
+  
+    1, 5, 3,  3, 5, 7,
+  
+    4, 1, 0,  4, 5, 1,
+  
+    2, 3, 6,  6, 3, 7
+    ], np.uint32)
+
+cubePos = np.array([
+    glm.vec3( 0.0,  0.0,  0.0), 
+    glm.vec3( 2.0,  5.0, -15.0), 
+    glm.vec3(-1.5, -2.2, -2.5),  
+    glm.vec3(-3.8, -2.0, -12.3),  
+    glm.vec3( 2.4, -0.4, -3.5),  
+    glm.vec3(-1.7,  3.0, -7.5),  
+    glm.vec3( 1.3, -2.0, -2.5),  
+    glm.vec3( 1.5,  2.0, -2.5), 
+    glm.vec3( 1.5,  0.2, -1.5), 
+    glm.vec3(-1.3,  1.0, -1.5), 
+])
 
 lastx : float = 0
 lasty : float = 0
@@ -82,16 +78,15 @@ class Camera:
         self.up = up
         self.front = front
         self.pos = pos
-
-       
-shader_object : Shader = None
-shader_light : Shader = None
+        
+shader : Shader = None
 
 camera : Camera = Camera(glm.vec3(0, 0, 3), glm.vec3(0, 0, -1), glm.vec3(0, 1, 0))
 
 lastFrame : float = 0.0
 currentFrame : float = 0.0
 deltaTime : float = 0.0
+
 
 def startGlfwAndMakeWindow(width: int, height: int):
     global window
@@ -101,7 +96,7 @@ def startGlfwAndMakeWindow(width: int, height: int):
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
     glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL_TRUE)
     
-    window = glfw.create_window(width, height, "Basic light", None, None)
+    window = glfw.create_window(width, height, "EX3: Vertext Shader and transform", None, None)
     if not window:
         print("couldnt make window")
         glfw.terminate()
@@ -154,78 +149,67 @@ def process_Input(window) -> None:
     if(glfw.get_key(window, glfw.KEY_D)):
         camera.pos += glm.normalize(glm.cross(camera.front, camera.up))* camera.speed
 
-def loadTexture(path):
-    img = Image.open(path).convert("RGBA")
-    img = img.transpose(Image.FLIP_TOP_BOTTOM)
-    data = img.tobytes()
-
-    texID = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, texID)
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
-    glGenerateMipmap(GL_TEXTURE_2D)
-
-    return texID
-
-
 def main():
-    global lastFrame, currentFrame, deltaTime, shader_object, direction, camera, window, shader_light,light
+    global lastFrame, currentFrame, deltaTime, shader, direction, camera, window
 
     startGlfwAndMakeWindow(800, 600)
     
-    shader_object = Shader(os.path.join(HERE, "Shaders", "vertexShader.vs"), os.path.join(HERE, "Shaders", "fragmentShader.fs"))
+    shader = Shader(os.path.join(HERE, "Shaders", "vertexShader.vs"), os.path.join(HERE, "Shaders", "fragmentShader.fs"))
+    shader.use()
 
     VAO = glGenVertexArrays(1)
     VBO = glGenBuffers(1)
-   
-    #object VAO
+    EBO = glGenBuffers(1)
+
     glBindVertexArray(VAO)
     glBindBuffer(GL_ARRAY_BUFFER, VBO)
     glBufferData(GL_ARRAY_BUFFER, vertex.nbytes, vertex, GL_STATIC_DRAW)
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * vertex.itemsize, ctypes.c_void_p(0))
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index.nbytes, index, GL_STATIC_DRAW)
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * vertex.itemsize, ctypes.c_void_p(0))
     glEnableVertexAttribArray(0)
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * vertex.itemsize, ctypes.c_void_p(3 * vertex.itemsize))
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * index.itemsize, ctypes.c_void_p(3 * index.itemsize))
     glEnableVertexAttribArray(1)
-    
+
+
+    viewLoc = glGetUniformLocation(shader.ID, "view")
+    modelLoc = glGetUniformLocation(shader.ID, "model")
+    peojectionLoc = glGetUniformLocation(shader.ID, "projection")
+
+
+    view = glm.lookAt(camera.pos, camera.front, camera.up)
     projection = glm.perspective(glm.radians(45), 800/600, 0.1, 100)
+   
+
     glEnable(GL_DEPTH_TEST)
-
-    currentTex = loadTexture(os.path.join(os.path.dirname(HERE), "resources", "crate", "crate.png"))
-
     
     while((not glfw.window_should_close(window)) and (not glfw.get_key(window, glfw.KEY_ESCAPE))):
         glClearColor(0, 0, 0, 1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
+
+
         currentFrame = glfw.get_time()
         deltaTime = currentFrame - lastFrame
         lastFrame = currentFrame
 
         process_Input(window)
-
-        shader_object.use()
-        glBindVertexArray(VAO)
-
-        viewLoc = glGetUniformLocation(shader_object.ID, "view")
-        modelLoc = glGetUniformLocation(shader_object.ID, "model")
-        peojectionLoc = glGetUniformLocation(shader_object.ID, "projection")
-
-        model = glm.mat4(1)
         view = glm.lookAt(camera.pos, camera.pos + camera.front, camera.up)
-        w, h = glfw.get_framebuffer_size(window)
-        projection = glm.perspective(glm.radians(45), w/max(h, 1), 0.1, 100)
 
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+       
         glUniformMatrix4fv(peojectionLoc, 1, GL_FALSE, glm.value_ptr(projection))
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm.value_ptr(view))
 
-        glDrawArrays(GL_TRIANGLES, 0, 36)
-                
+        for i, pos in enumerate(cubePos):
+            model = glm.mat4(1)      
+            model = glm.translate(model, pos)
+            angle : float = 20.0 * i
+            model = glm.rotate(model, glm.radians(angle), glm.vec3(1.0, 0.3, 0.5))
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, None)
+        
         glfw.swap_buffers(window)
         glfw.poll_events()
         

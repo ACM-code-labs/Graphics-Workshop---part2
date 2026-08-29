@@ -219,7 +219,7 @@ def main():
     shader_light.use()
     glUniform3fv(lightColorLoc_2, 1, glm.value_ptr(light.color))
 
-    projection = glm.perspective(glm.radians(45), 800/600, 0.1, 100)
+    
     glEnable(GL_DEPTH_TEST)
     
     while((not glfw.window_should_close(window)) and (not glfw.get_key(window, glfw.KEY_ESCAPE))):
@@ -241,6 +241,8 @@ def main():
 
         model = glm.mat4(1)
         view = glm.lookAt(camera.pos, camera.pos + camera.front, camera.up)
+        w, h = glfw.get_framebuffer_size(window)
+        projection = glm.perspective(glm.radians(45), w/max(h, 1), 0.1, 100)
 
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm.value_ptr(model))
         glUniformMatrix4fv(peojectionLoc, 1, GL_FALSE, glm.value_ptr(projection))
