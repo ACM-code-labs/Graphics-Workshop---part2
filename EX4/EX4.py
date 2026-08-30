@@ -8,6 +8,7 @@ import numpy as np
 from OpenGL.GL import *
 
 from dataclasses import dataclass
+from PIL import Image
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from util.shader import Shader
@@ -85,11 +86,18 @@ class Camera:
 @dataclass
 class Light:
     pos: glm.vec3
-    color: glm.vec3
+    
+    ambient :  glm.vec3
+    diffuse : glm.vec3
+    specular : glm.vec3
 
-    def __init__(self, pos : glm.vec3, color : glm.vec3):
+    def __init__(self, pos : glm.vec3, ambient : glm.vec3, diffuse: glm.vec3, specular: glm.vec3):
         self.pos = pos
-        self.color = color
+
+        self.ambient = ambient
+        self.diffuse = diffuse
+        self.specular = specular
+        
 
 @dataclass
 class Material:
@@ -110,7 +118,7 @@ shader_light : Shader = None
 
 camera : Camera = Camera(glm.vec3(0, 0, 3), glm.vec3(0, 0, -1), glm.vec3(0, 1, 0))
 
-light : Light = Light(glm.vec3(1.2, 1.0, 2.0), glm.vec3(1, 1, 1))
+light : Light = Light(glm.vec3(1.2, 1.0, 2.0), glm.vec3(0.2, 0.2, 0.2), glm.vec3(0.5, 0.5, 0.5), glm.vec3(1, 1, 1))
 
 material : Material = Material(glm.vec3(1.0, 0.5, 0.31), glm.vec3(1.0, 0.5, 0.31), glm.vec3(0.5, 0.5, 0.5), 32)
 
@@ -179,6 +187,22 @@ def process_Input(window) -> None:
     if(glfw.get_key(window, glfw.KEY_D)):
         camera.pos += glm.normalize(glm.cross(camera.front, camera.up))* camera.speed
 
+def loadTexture(path):
+    img = Image.open(path).convert("RGBA")
+    img = img.transpose(Image.FLIP_TOP_BOTTOM)
+    data = img.tobytes()
+
+    texID = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texID)
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
+    glGenerateMipmap(GL_TEXTURE_2D)
+
+    return texID
+
 def main():
     global lastFrame, currentFrame, deltaTime, shader_object, direction, camera, window, shader_light,light
 
@@ -190,6 +214,14 @@ def main():
     VAO = glGenVertexArrays(1)
     lightVAO = glGenVertexArrays(1)
     VBO = glGenBuffers(1)
+
+    tex0 = loadTexture(os.path.join(os.path.dirname(HERE), "resources", "crate", "crate.png"))
+    tex1 = loadTexture(os.path.join(os.path.dirname(HERE), "resources", "crate", "crate_specular.png"))
+
+    glActiveTexture(GL_TEXTURE0)
+    glBindTexture(GL_TEXTURE_2D, tex0)
+    glActiveTexture(GL_TEXTURE1)
+    glBindTexture(GL_TEXTURE_2D, tex1)
    
     #object VAO
     glBindVertexArray(VAO)
@@ -213,32 +245,39 @@ def main():
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * vertex.itemsize, ctypes.c_void_p(0))
     glEnableVertexAttribArray(0)
 
-    lightColorLoc = glGetUniformLocation(shader_object.ID, "lightColor")
-    lightPosLoc= glGetUniformLocation(shader_object.ID, "lightPos")
     viewerPos= glGetUniformLocation(shader_object.ID, "viewPos")
 
     #material
-    ambientPos= glGetUniformLocation(shader_object.ID, "material.ambient")
-    diffusePos= glGetUniformLocation(shader_object.ID, "material.diffuse")
-    specularPos= glGetUniformLocation(shader_object.ID, "material.specular")
-    shininessPos= glGetUniformLocation(shader_object.ID, "material.shininess")
+    materialTextureLoc = glGetUniformLocation(shader_object.ID, "material.diffuse")
+    materialSpecularLoc = glGetUniformLocation(shader_object.ID, "material.specular")
+    materailShininessLoc = glGetUniformLocation(shader_object.ID, "material.shininess")
+
+    #light
+    lightPosLoc = glGetUniformLocation(shader_object.ID, "light.lightPos")
+    lightAmbientLoc = glGetUniformLocation(shader_object.ID, "light.ambient")
+    lightDiffuseLoc = glGetUniformLocation(shader_object.ID, "light.diffuse")
+    lightSpecularLoc = glGetUniformLocation(shader_object.ID, "light.specular")
+
         
     lightColorLoc_2 = glGetUniformLocation(shader_light.ID, "lightColor")
     
     shader_object.use()
-    glUniform3fv(lightColorLoc, 1, glm.value_ptr(light.color))
+    glUniform3fv(lightSpecularLoc, 1, glm.value_ptr(light.specular))
+    glUniform3fv(lightDiffuseLoc, 1, glm.value_ptr(light.diffuse))
+    glUniform3fv(lightAmbientLoc, 1, glm.value_ptr(light.ambient))
     glUniform3fv(lightPosLoc, 1, glm.value_ptr(light.pos))
 
-    glUniform3fv(ambientPos, 1, glm.value_ptr(material.ambient))
-    glUniform3fv(diffusePos, 1, glm.value_ptr(material.diffuse))
-    glUniform3fv(specularPos, 1, glm.value_ptr(material.specular))
-    glUniform1f(shininessPos, material.shininess)   
-   
+    
+    glUniform1i(materialTextureLoc, 0)
+    glUniform1i(materialSpecularLoc, 1)
+    
+    glUniform1f(materailShininessLoc, material.shininess)
 
+   
     shader_light.use()
-    glUniform3fv(lightColorLoc_2, 1, glm.value_ptr(light.color))
+    
+    glUniform3fv(lightColorLoc_2, 1, glm.value_ptr(light.specular))
 
-   
     glEnable(GL_DEPTH_TEST)
     
     while((not glfw.window_should_close(window)) and (not glfw.get_key(window, glfw.KEY_ESCAPE))):
